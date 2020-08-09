@@ -15,14 +15,14 @@ Thank you for understanding!
 - Offers seperate UI to manage everything - No more random commands to remember!
 - Intuitive commands for users - Only mention the bot and (mostly) write simple sentences
 - Song search is mostly prioritized by your taste, Tidal offers a very good search, even if you have no taste
-- You can stream whole Playlists you prepared, or your while music library
+- You can stream whole Playlists you prepared, or your own whole music library
   - In case you really just want to listen to music together and don't want to worry about it
 - Will also support the usual things people stream using bots
   - WIP, but currently planned is direct URL support, YouTube and SoundCloud
 - Possibly Lyrics support will be added, not important **_for now_**
 - The bot can be re-used over multiple servers (but not simultaneously)
 
-## Disatvantages
+## Disadvantages
 
 - Tidal is less known
 - The Tidal api can change anytime as there is **no official api support from tidal**
