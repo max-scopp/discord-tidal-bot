@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowUnreachableCode": false,
+    "experimentalDecorators": true,
+    "lib": ["DOM", "ESNext"],
+    "inlineSourceMap": true,
+    "moduleResolution": "node",
+    "module": "ESNext",
+    "target": "ESNext",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  }
+}

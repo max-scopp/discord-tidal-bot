@@ -1,0 +1,5 @@
+node_modules
+dist
+types
+www
+**/tidal-bot-backend/config.json

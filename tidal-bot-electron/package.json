@@ -1,0 +1,38 @@
+{
+  "name": "discord-tidal-bot",
+  "version": "1.0.0",
+  "productName": "Tidal Discord Bot",
+  "description": "A minimal Electron application written with Typescript",
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node ./scripts/dev.ts",
+    "start:electron": "npx electron ./dist/app.js",
+    "lint": "tslint -c tslint.json -p tsconfig.json"
+  },
+  "keywords": [
+    "Electron",
+    "quick",
+    "start",
+    "tutorial",
+    "demo",
+    "typescript"
+  ],
+  "author": "Maximilian Scopp <me@maxscopp.de>",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^9.0.4",
+    "shelljs": "^0.8.4",
+    "ts-node": "^8.10.2",
+    "tslint": "^6.1.2",
+    "typescript": "^3.9.5"
+  },
+  "dependencies": {
+    "@discordjs/opus": "^0.3.2",
+    "bad-words": "^3.0.3",
+    "debug": "^4.1.1",
+    "discord.js": "^12.2.0",
+    "electron-serve": "^1.0.0",
+    "hyperscript": "^2.0.2",
+    "redux": "^4.0.5"
+  }
+}

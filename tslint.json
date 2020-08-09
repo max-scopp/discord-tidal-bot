@@ -1,0 +1,14 @@
+{
+    "extends": [
+        "tslint:latest",
+        "tslint-config-prettier",
+        "tslint-immutable"
+    ],
+    "jsRules": {
+        "max-line-length": {
+            "options": [
+                120
+            ]
+        }
+    }
+}

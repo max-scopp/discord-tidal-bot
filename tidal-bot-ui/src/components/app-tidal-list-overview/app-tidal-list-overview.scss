@@ -1,0 +1,10 @@
+app-tidal-list-overview {
+  #toolbar {
+    position: sticky;
+    top: 0;
+  }
+
+  msc-list {
+    overflow: scroll;
+  }
+}

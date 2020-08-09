@@ -1,0 +1,17 @@
+{
+  "folders": [
+    {
+      "path": "tidal-bot-ui"
+    },
+    {
+      "path": "tidal-bot-electron"
+    },
+    {
+      "path": ".",
+      "name": "ROOT"
+    }
+  ],
+  "settings": {
+    "html.customData": ["node_modules/@jmms/core/custom-elements.json"]
+  }
+}
