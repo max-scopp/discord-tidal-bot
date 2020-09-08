@@ -4,7 +4,8 @@
   "productName": "Tidal Discord Bot",
   "description": "A minimal Electron application written with Typescript",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.json ",
+    "build:watch": "npm run build -- --watch",
     "start": "ts-node ./scripts/dev.ts",
     "start:electron": "npx electron ./dist/app.js",
     "lint": "tslint -c tslint.json -p tsconfig.json"
@@ -28,11 +29,14 @@
   },
   "dependencies": {
     "@discordjs/opus": "^0.3.2",
+    "@types/cheerio": "^0.22.21",
     "bad-words": "^3.0.3",
+    "cheerio": "^1.0.0-rc.3",
     "debug": "^4.1.1",
     "discord.js": "^12.2.0",
     "electron-serve": "^1.0.0",
     "hyperscript": "^2.0.2",
+    "node-fetch": "^2.6.1",
     "redux": "^4.0.5"
   }
 }

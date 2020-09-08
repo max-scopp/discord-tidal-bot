@@ -5,12 +5,15 @@
     "esModuleInterop": true,
     "allowUnreachableCode": false,
     "experimentalDecorators": true,
-    "lib": ["DOM", "ESNext"],
+    "lib": [
+      "DOM",
+      "ESNext"
+    ],
     "inlineSourceMap": true,
     "moduleResolution": "node",
     "module": "ESNext",
     "target": "ESNext",
-    "noUnusedLocals": true,
-    "noUnusedParameters": true
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   }
 }

@@ -2,12 +2,16 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch via NPM",
+      "name": "Debug Main Process",
+      "type": "node",
       "request": "launch",
-      "runtimeArgs": ["run-script", "start:electron"],
-      "runtimeExecutable": "npm",
-      "skipFiles": ["<node_internals>/**"],
-      "type": "pwa-node"
-    }
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+      "windows": {
+        "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
+      },
+      "args" : ["./dist/app.js"],
+      "outputCapture": "std"
+    },
   ]
 }
