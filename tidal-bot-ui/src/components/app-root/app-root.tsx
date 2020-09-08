@@ -1,9 +1,10 @@
-import { Component, h, Prop } from '@stencil/core';
+import { Component, h, Prop, Host } from '@stencil/core';
 import { RouterHistory, injectHistory } from '@stencil/router';
+import { toastController } from '@ionic/core';
 
 @Component({
   tag: 'app-root',
-  styleUrl: 'app-root.css',
+  styleUrl: 'app-root.scss',
   scoped: true
 })
 export class AppRoot {
@@ -17,24 +18,26 @@ export class AppRoot {
 
   toLists = () => this.history.push("/lists");
 
+  async componentDidLoad() {
+    ipcRenderer.on('tb-toast', async (ev, header, message, buttonText, color) => {
+      const toast = await toastController.create({
+        header,
+        message,
+        position: 'bottom',
+        duration: !buttonText ? 5e3 : undefined,
+        buttons: [buttonText],
+        color,
+        mode: 'ios'
+      });
+      toast.present();
+    })
+  }
+
+
   render() {
     return (
-      <msc-content>
-        <msc-grid centerItems={true} id="titleBar" template="28px / [actions-start] auto [actions-end title-start] 1fr [title-end window-actions-start] auto [window-actions-end]">
-          <msc-button-group>
-            <msc-button onActivate={this.toQueue}>Queue</msc-button>
-            <msc-button onActivate={this.toLists}>Lists</msc-button>
-          </msc-button-group>
-          <h5 class="window-title" onClick={this.toHome}>{document.title}</h5>
-          <msc-button-group class="window-actions">
-            <msc-button>
-
-            </msc-button>
-          </msc-button-group>
-        </msc-grid>
-
-        <main>
-          <app-now-playing ></app-now-playing>
+      <Host>
+        <ion-content id="mainView">
           <stencil-router>
             <stencil-route-switch scrollTopOffset={0}>
               <stencil-route url='/login' component='app-tidal-login' />
@@ -44,8 +47,9 @@ export class AppRoot {
               <stencil-route url='/' component='app-home' />
             </stencil-route-switch>
           </stencil-router>
-        </main>
-      </msc-content>
+        </ion-content>
+
+      </Host>
     );
   }
 }

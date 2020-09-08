@@ -1,0 +1,20 @@
+sidebar-discord-channels {
+    $radius: .6rem;
+
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+
+    max-height: 90%;
+    width: 260px;
+
+    padding: 1rem;
+    
+    border-radius: $radius 0 0 $radius;
+    backdrop-filter: blur(10px);
+
+    background-color: var(--white-translucent);
+    border: 1px solid var(--white-translucent-heavy);
+    box-shadow: 0 0 0 1px rgba(white, .04);
+}

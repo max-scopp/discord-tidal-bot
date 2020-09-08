@@ -1,3 +1,4 @@
+import { Track, Artist } from "../../tidal-bot-electron/types/tidal-bot-backend/tidal/types";
 
 export enum BackendSection {
   Unknown,
@@ -22,6 +23,26 @@ export enum BackendSection {
 //     }, 1e3);
 //   })
 // }
+
+
+export enum SizeOptions {
+  Thumbnail = 80,
+  Normal = 640,
+  Large = 1280
+}
+
+/**
+ * @param track 
+ * @param width 
+ * @param height 
+ */
+export function getAlbumArt(track: Track, size: SizeOptions) {
+  return 'https://resources.tidal.com/images/' + (track.album as any).cover.replace(/-/g, '/') + '/' + size + 'x' + size + '.jpg';
+}
+
+export function displayArtists(artists: Artist[], ) {
+  return artists.map(artist => artist.name).join(', ');
+}
 
 /**
  * TODO: Implement timeout when backend simply doesn't respond.
@@ -51,6 +72,17 @@ export async function evalBackend<R>(backendSection: BackendSection, functionNam
         });
 
         ipcRenderer.once('tb-discord-return:' + functionName, (_event, ...results) => {
+          resolve(...results);
+        });
+        break;
+      }
+      case BackendSection.Connector: {
+        ipcRenderer.send('tb-connector-eval', {
+          function: functionName,
+          arguments: args
+        });
+
+        ipcRenderer.once('tb-connector-return:' + functionName, (_event, ...results) => {
           resolve(...results);
         });
         break;

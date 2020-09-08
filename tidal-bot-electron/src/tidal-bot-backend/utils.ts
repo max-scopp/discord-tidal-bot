@@ -1,5 +1,19 @@
+import { Track } from "./tidal/types";
+
 namespace Utils {
   export function noop() { }
+
+  export function displayTitle(track: Track, options: Partial<{
+    includeURL: boolean
+  }> = {}) {
+    return [
+      track.explicit ? '(explicit) ' : '',
+      track.title,
+      ' - ',
+      track.artists.map(artist => artist.name).join(', '),
+      options.includeURL ? `\n${track.url}` : ''
+    ].join('');
+  }
 
   export function literalObjects(_in) {
     if (typeof _in === 'object') {

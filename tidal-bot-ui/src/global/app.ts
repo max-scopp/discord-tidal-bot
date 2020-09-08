@@ -1,4 +1,7 @@
 import '@jmms/core';
+import '@ionic/core';
+
+import { ensureColorContrastFor } from '@jmms/core';
 
 export default async () => {
   /**
@@ -6,6 +9,8 @@ export default async () => {
    * exported by the global script. Ensure all of the code in the global script
    * is wrapped in the function() that is exported.
    */
+
+  ensureColorContrastFor(document.body);
 };
 
 declare global {

@@ -1,1 +1,12 @@
 @import "~@jmms/core/dist/msc/msc.css";
+@import "~@ionic/core/css/core.css";
+
+:root {
+  //--mode: hsl(0, 0%, 4%);
+  --ion-background-color: var(--mode);
+  --ion-text-color: currentColor;
+}
+
+ion-content, ion-item {
+  --background: transparent;
+}

@@ -1,0 +1,46 @@
+:host {
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  position: absolute;
+  flex-direction: column;
+  justify-content: space-between;
+  contain: layout size style;
+  overflow: hidden;
+  z-index: 0;
+}
+
+#mainView {
+  // enable gpu calculations for background
+  will-change: transform;
+}
+
+#titleBar {
+  -webkit-user-select: none;
+  -webkit-app-region: drag;
+
+  border-bottom: 2px solid;
+  background-color: var(--primary);
+  color: var(--text-on-dark);
+}
+
+stencil-router {
+  height: 100%;
+}
+
+.window-actions > msc-button {
+  border-radius: 100px;
+}
+
+.window-title {
+  display: grid;
+  place-items: center;
+  grid-auto-flow: column;
+
+  gap: 2px;
+  margin: 0;
+
+  font-size: 1.2rem;
+}

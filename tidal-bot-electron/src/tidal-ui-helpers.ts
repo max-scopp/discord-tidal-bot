@@ -1,5 +1,5 @@
 import Main from './main';
-import { TidalState } from './tidal-bot-backend';
+import { BotState } from './tidal-bot-backend';
 
 export default class TidalUI {
 
@@ -9,9 +9,9 @@ export default class TidalUI {
 
   static showLogin() {
     switch (Main.tidalBot.state) {
-      case TidalState.NoLogin:
+      case BotState.NoLogin:
         TidalUI.eval(`location.assign("/login")`);
-      case TidalState.Invalid:
+      case BotState.Invalid:
         TidalUI.eval(`location.assign("/login?invalid")`);
     }
   }

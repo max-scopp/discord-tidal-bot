@@ -22,14 +22,12 @@ export class AppTidalLogin {
 
     onSubmit = (ev: Event) => {
         ev.preventDefault();
-        debugger
-
         ipcRenderer.send('tb-set-credentials', this.credentials);
     }
 
     render() {
         return (
-            <msc-content center>
+            <ion-content>
 
                 <form onSubmit={(ev) => {
                     ev.preventDefault();
@@ -68,7 +66,7 @@ export class AppTidalLogin {
                     </msc-grid>
                 </form>
 
-            </msc-content>
+            </ion-content>
         );
     }
 }

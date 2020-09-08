@@ -36,6 +36,44 @@ Thank you for understanding!
 - You must create the discord bot yourself, then register him to this App
   - Can be a bit difficult for non-power-users, but I'll make a tutorial!
 
+## Features
+
+Not ordered.
+
+- [-] Visualizer.
+  - Currently using [wavesurfer.js](https://wavesurfer-js.org/)
+  - Will be (hopefully) be replaced with [skqw](https://michaelbromley.github.io/skqw/) and an **HOT** Winamp-inspired visualization
+- [X] Dark and Light mode (cmon, it's 2020)
+- [-] A cool and fresh UI style (basic concept done, but always WIP)
+- [-] Queue overview
+  - [X] Show queue using discord command (".queue")
+  - [ ] Manage Queue using the UI (coming soon!)
+- [ ] Queue whole Playlists (even all your favorites)
+- [ ] Allow for "infinite" play (request a mix after the last track)
+- [x] User requests and Prioritized requests
+  - [X] When Queue is empty the new request is played instantly
+- [X] Lyrics support using [GENIUS](http://genius.com/) (currently disabled for karaoke mode)
+  - Includes annotations with direct links
+- [ ] Various permissions for discord users, like:
+  - Allow skipping
+  - Allow play/pause
+  - Allow instant-play when queue is empty
+  - Behaviour when to scape lyrics
+  - ...and more!
+- [X] Skipping
+  - [X] Using the UI
+  - [ ] Using Discord commands (".next", will be added when permissions are done)
+- [X] Play/Pause
+  - [X] Using the UI
+  - [X] Using Discord commands (".pause" and ".resume")
+- [X] View TIDAL library
+  - [X] Infinite scrolling support
+- [ ] UI Search
+- [ ] External support (ordered by importance)
+  1. [ ] YouTube
+  2. [ ] SoundCloud
+  3. [ ] Spotify
+
 ## Getting started
 
 1. Clone this repo
@@ -120,3 +158,7 @@ Letting them build using node-gyp works (what a suprise!), but it has some quirk
 Compile to node at compile-time, requests at runtime using electron signature.
 
 Don't know why that even is important to differenciate.
+
+```bash
+ln -Fs node-v83-napi-v3-linux-x64-glibc-2.31 node_modules/@discordjs/opus/prebuild/electron-v9.0-napi-v3-linux-x64-glibc-2.31
+```

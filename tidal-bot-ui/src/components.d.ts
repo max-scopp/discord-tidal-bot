@@ -13,14 +13,21 @@ export namespace Components {
     }
     interface AppNowPlaying {
     }
+    interface AppPlayBars {
+    }
     interface AppRoot {
         "history": RouterHistory;
     }
     interface AppTidalList {
     }
-    interface AppTidalListOverview {
-    }
     interface AppTidalLogin {
+    }
+    interface SidebarDiscordChannels {
+    }
+    interface SidebarTidalPlaylists {
+    }
+    interface TidalTrackList {
+        "playlistId": string;
     }
 }
 declare global {
@@ -42,6 +49,12 @@ declare global {
         prototype: HTMLAppNowPlayingElement;
         new (): HTMLAppNowPlayingElement;
     };
+    interface HTMLAppPlayBarsElement extends Components.AppPlayBars, HTMLStencilElement {
+    }
+    var HTMLAppPlayBarsElement: {
+        prototype: HTMLAppPlayBarsElement;
+        new (): HTMLAppPlayBarsElement;
+    };
     interface HTMLAppRootElement extends Components.AppRoot, HTMLStencilElement {
     }
     var HTMLAppRootElement: {
@@ -54,26 +67,41 @@ declare global {
         prototype: HTMLAppTidalListElement;
         new (): HTMLAppTidalListElement;
     };
-    interface HTMLAppTidalListOverviewElement extends Components.AppTidalListOverview, HTMLStencilElement {
-    }
-    var HTMLAppTidalListOverviewElement: {
-        prototype: HTMLAppTidalListOverviewElement;
-        new (): HTMLAppTidalListOverviewElement;
-    };
     interface HTMLAppTidalLoginElement extends Components.AppTidalLogin, HTMLStencilElement {
     }
     var HTMLAppTidalLoginElement: {
         prototype: HTMLAppTidalLoginElement;
         new (): HTMLAppTidalLoginElement;
     };
+    interface HTMLSidebarDiscordChannelsElement extends Components.SidebarDiscordChannels, HTMLStencilElement {
+    }
+    var HTMLSidebarDiscordChannelsElement: {
+        prototype: HTMLSidebarDiscordChannelsElement;
+        new (): HTMLSidebarDiscordChannelsElement;
+    };
+    interface HTMLSidebarTidalPlaylistsElement extends Components.SidebarTidalPlaylists, HTMLStencilElement {
+    }
+    var HTMLSidebarTidalPlaylistsElement: {
+        prototype: HTMLSidebarTidalPlaylistsElement;
+        new (): HTMLSidebarTidalPlaylistsElement;
+    };
+    interface HTMLTidalTrackListElement extends Components.TidalTrackList, HTMLStencilElement {
+    }
+    var HTMLTidalTrackListElement: {
+        prototype: HTMLTidalTrackListElement;
+        new (): HTMLTidalTrackListElement;
+    };
     interface HTMLElementTagNameMap {
         "app-bot-queue": HTMLAppBotQueueElement;
         "app-home": HTMLAppHomeElement;
         "app-now-playing": HTMLAppNowPlayingElement;
+        "app-play-bars": HTMLAppPlayBarsElement;
         "app-root": HTMLAppRootElement;
         "app-tidal-list": HTMLAppTidalListElement;
-        "app-tidal-list-overview": HTMLAppTidalListOverviewElement;
         "app-tidal-login": HTMLAppTidalLoginElement;
+        "sidebar-discord-channels": HTMLSidebarDiscordChannelsElement;
+        "sidebar-tidal-playlists": HTMLSidebarTidalPlaylistsElement;
+        "tidal-track-list": HTMLTidalTrackListElement;
     }
 }
 declare namespace LocalJSX {
@@ -83,23 +111,34 @@ declare namespace LocalJSX {
     }
     interface AppNowPlaying {
     }
+    interface AppPlayBars {
+    }
     interface AppRoot {
         "history"?: RouterHistory;
     }
     interface AppTidalList {
     }
-    interface AppTidalListOverview {
-    }
     interface AppTidalLogin {
+    }
+    interface SidebarDiscordChannels {
+    }
+    interface SidebarTidalPlaylists {
+        "onPlaylistClick"?: (event: CustomEvent<any>) => void;
+    }
+    interface TidalTrackList {
+        "playlistId"?: string;
     }
     interface IntrinsicElements {
         "app-bot-queue": AppBotQueue;
         "app-home": AppHome;
         "app-now-playing": AppNowPlaying;
+        "app-play-bars": AppPlayBars;
         "app-root": AppRoot;
         "app-tidal-list": AppTidalList;
-        "app-tidal-list-overview": AppTidalListOverview;
         "app-tidal-login": AppTidalLogin;
+        "sidebar-discord-channels": SidebarDiscordChannels;
+        "sidebar-tidal-playlists": SidebarTidalPlaylists;
+        "tidal-track-list": TidalTrackList;
     }
 }
 export { LocalJSX as JSX };
@@ -109,10 +148,13 @@ declare module "@stencil/core" {
             "app-bot-queue": LocalJSX.AppBotQueue & JSXBase.HTMLAttributes<HTMLAppBotQueueElement>;
             "app-home": LocalJSX.AppHome & JSXBase.HTMLAttributes<HTMLAppHomeElement>;
             "app-now-playing": LocalJSX.AppNowPlaying & JSXBase.HTMLAttributes<HTMLAppNowPlayingElement>;
+            "app-play-bars": LocalJSX.AppPlayBars & JSXBase.HTMLAttributes<HTMLAppPlayBarsElement>;
             "app-root": LocalJSX.AppRoot & JSXBase.HTMLAttributes<HTMLAppRootElement>;
             "app-tidal-list": LocalJSX.AppTidalList & JSXBase.HTMLAttributes<HTMLAppTidalListElement>;
-            "app-tidal-list-overview": LocalJSX.AppTidalListOverview & JSXBase.HTMLAttributes<HTMLAppTidalListOverviewElement>;
             "app-tidal-login": LocalJSX.AppTidalLogin & JSXBase.HTMLAttributes<HTMLAppTidalLoginElement>;
+            "sidebar-discord-channels": LocalJSX.SidebarDiscordChannels & JSXBase.HTMLAttributes<HTMLSidebarDiscordChannelsElement>;
+            "sidebar-tidal-playlists": LocalJSX.SidebarTidalPlaylists & JSXBase.HTMLAttributes<HTMLSidebarTidalPlaylistsElement>;
+            "tidal-track-list": LocalJSX.TidalTrackList & JSXBase.HTMLAttributes<HTMLTidalTrackListElement>;
         }
     }
 }

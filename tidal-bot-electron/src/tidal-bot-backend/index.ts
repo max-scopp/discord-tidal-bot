@@ -1,79 +1,120 @@
+import debug from 'debug';
+import { VoiceChannel, Message, MessageEmbed, StreamDispatcher } from 'discord.js';
 import { ipcMain, IpcMainEvent } from 'electron';
 import * as fs from 'fs';
 import { homedir } from 'os';
 import * as path from 'path';
-import DiscordStreamable from './discord';
-import TidalManager, { Track } from './tidal';
-import { Credentials, UI } from './types';
-import Utils from './utils';
-import { Message, VoiceChannel } from 'discord.js';
-import debug from 'debug';
 import Main from '../main';
+import DiscordStreamable from './discord';
+import TidalManager from './tidal';
+import { FunctionRequest, PlayRequest, UI, SpecificTrack, Configuration } from './types';
+import Utils from './utils';
+import { Track, Credentials } from './tidal/types';
+import { searchLyrics } from './lyrics';
+import { getAlbumArt, SizeOptions } from './tidal/utils';
+import QueueManager from './queue';
 
 const logger = debug('tb:lobby');
 
-export enum TidalState {
+// TODO: possibly replace with a more "trusted" url, this may change
+const geniusIcon = "https://images.genius.com/1d88f9c0c8623d60cf6d85ad3b38a6de.999x999x1.png";
+
+export enum BotState {
   Initializing,
   NoLogin,
   Invalid,
   Valid
 }
 
-interface BaseDiscordRequested {
-  sender?: Message;
-}
-
-export interface PlaySearchRequest extends BaseDiscordRequested {
-  type: 'search',
-  query: string;
-}
-
-export interface SpecificTrack extends BaseDiscordRequested {
-  type: 'track',
-  track: Track;
-}
-
-export type PlayRequest = PlaySearchRequest | SpecificTrack;
-
-export interface JoinVoiceRequest {
-  id: string;
-}
-
-interface FunctionRequest {
-  function: string;
-  arguments: any[];
+export enum PlayState {
+  Playing = "playing",
+  Paused = "paused",
+  Ended = "ended"
 }
 
 export default class TidalBot {
   manager: TidalManager;
   discord: DiscordStreamable = new DiscordStreamable(this);
 
-  _state: TidalState;
+  _state: BotState;
+
+  queueManager: QueueManager = new QueueManager(this.discord);
 
   get state() {
     return this._state;
   }
 
-  set state(newState: TidalState) {
+  set state(newState: BotState) {
     this._state = newState;
   }
 
   constructor() {
-    try {
-      this.initApi();
-    } catch (e) {
-      this.state = TidalState.NoLogin;
-    }
+    this.initApi();
 
     ipcMain.on('tb-play', this.handlePlayRequest.bind(this));
     ipcMain.on('tb-tidal-eval', this.handleGenericTidalRequest.bind(this));
     ipcMain.on('tb-discord-eval', this.handleGenericDiscordRequest.bind(this));
+    ipcMain.on('tb-connector-eval', this.handleRequest.bind(this));
   }
 
   destroy() {
     this.manager.destroy()
     this.discord.destroy()
   }
+
+  /**
+   * ! IMPORTANT:
+   * ! - Always return literals, no classes.
+   * ! - Don't add unsafe arguments, like user-input
+   * ! - Don't call functions by strings
+   * ! - Always map things, don't be a fucking lazy fuck
+   * @param event 
+   * @param request 
+   */
+  async handleRequest(event: IpcMainEvent, request: FunctionRequest) {
+    let result;
+    switch (request.function) {
+      case 'next':
+        this.queueManager.next();
+        break;
+      case 'setPlayState':
+        this.setPlayState(request.arguments[0]);
+        break;
+      case 'getPlayState':
+        this.getPlayState();
+        break;
+      default: {
+        logger('Unable to handle generic request. Function not known. ', request.function)
+      }
+    }
+
+    event.sender.send('tb-discord-return:' + request.function, result);
+  }
+
+  setPlayState(newPlayState: PlayState) {
+    switch (newPlayState) {
+      case PlayState.Paused: {
+        return this.queueManager.pause();
+      }
+      case PlayState.Playing: {
+        return this.queueManager.resume();
+      }
+      case PlayState.Ended: {
+        return this.queueManager.endCurrent();
+      }
+    }
+  }
+
+  /**
+   * If `playing` is set, something is playing, or is currently paused.
+   * If `playing` is NOT set, there is nothing to play and therefor has been set as "ended".
+   * 
+   * There is no definition of "nothing ever played".
+   */
+  getPlayState() {
+    return this.queueManager.getPlayState();
+  }
+
 
   /**
    * ! IMPORTANT:
@@ -140,21 +181,60 @@ export default class TidalBot {
 
   async handleVoiceJoinRequest(id: string) {
     const channel = await this.discord.client.channels.fetch(id);
-    (channel as VoiceChannel).join();
+    this.setConfig('lastVoiceChannelID', channel.id);
+    return (channel as VoiceChannel).join();
   }
 
+  /**
+   * Returns false if the request failed, true on success.
+   * MAY return null when the request was unable to be handled (malformed).
+   * @param event 
+   * @param request 
+   */
   async handlePlayRequest(event: IpcMainEvent | null, request: PlayRequest) {
+    let track = null;
     switch (request.type) {
       case "search": {
-        const track = await this.findFirstTrack(request.query)
-        return this.streamTrack(track)
+        const foundTrack = await this.findFirstTrack(request.query)
+
+        if (!foundTrack) {
+          return false;
+        } else {
+          track = foundTrack
+        }
+
+        break;
       }
       case "track": {
-        return this.streamTrack(request.track)
+        track = (request as SpecificTrack).track;
+        break;
       }
       default: return null;
     }
 
+    const fromDiscordMessage = request.sender;
+
+    if (!fromDiscordMessage) {
+      return this.streamTrack(track, event, request);
+    } else {
+      const didQueue = this.queueManager.pushExternal(
+        track,
+        this.getStreamURLFromTidalFactory(track),
+        request.sender.author
+      );
+
+      if (didQueue) {
+        if (request.sender) {
+          request.sender.react('🆗');
+          this.showPlayEmbed(track, request.sender, [
+            "I've queued your request and will notify you when it's playing.",
+            "You can cancel this request by telling me to `.stop`."
+          ]);
+        }
+      }
+    }
+
+    return true;
   }
 
   async findFirstTrack(query: string) {
@@ -175,7 +255,18 @@ export default class TidalBot {
     return firstTrack || false;
   }
 
+  /**
+   * Returns a new function whose can be called to
+   * retrieve the *url* to stream a track from tidal.
+   * @param track 
+   */
+  getStreamURLFromTidalFactory(track: Track): () => Promise<string> {
+    return () => this.manager.getStreamURL(track)
+      .then(result => result.url);
+  }
+
   async streamTrack(track: Track, event?: IpcMainEvent, request?: PlayRequest) {
+    event; // TODO:event do something with that
     if (!track.streamReady || !track.allowStreaming) {
       request.sender.reply('Sorry, this title cannot be streamed.');
 
@@ -185,26 +276,151 @@ export default class TidalBot {
       return false;
     }
 
-    let streaming = await this.manager.getStreamURL(track.id);
+    let streaming = await this.manager.getStreamURL(track);
 
-    this.discord.playURL(streaming.url, track.title);
+    // userId of author, otherwise undefined
+    const userId = request && request.sender && request.sender.author.id;
 
-    if (event) { // not sure if I really neeed that
-      event.sender.send('tb-streaming', track)
-    }
-
-    Main.mainWindow.webContents.send('tb-streaming', track);
-
-    if (request.sender) {
-      request.sender.reply(`${track.title} - ${track.artists.map(artist => artist.name).join(', ')}\n${track.url}`);
-      request.sender.react('✔');
-    }
+    this.queueManager.play(streaming.url, track, userId);
 
     return true;
   }
 
+  async showPlayEmbed(track: Track, sender: Message, messagePreflight?: string | string[]) {
+    //this.showLyrics(track, sender);
+
+    const embed = new MessageEmbed();
+
+    const description = [
+      track.artists.map(
+        artist => artist.type === "MAIN"
+          ? `**${artist.name}**`
+          : artist.name
+      ),
+      [
+        `${track.explicit ? '(explicit)' : ''}`
+      ].join(' ')
+    ]
+
+    const fields = [
+      {
+        name: 'Copyright',
+        value: track.copyright,
+        inline: true
+      },
+      {
+        name: 'Length',
+        value: `${track.duration} seconds`,
+        inline: true
+      },
+      {
+        name: 'Popularity',
+        value: track.popularity,
+        inline: true
+      },
+      {
+        name: 'Audio Quality',
+        value: [
+          `Modes: ${track.audioModes}`,
+          `Qualities: ${track.audioQuality}`,
+        ],
+        inline: true
+      },
+    ]
+
+    const albumCover = getAlbumArt(track.album.cover, SizeOptions.Normal);
+
+    embed
+      .setColor('#9dff00')
+      .setTitle(track.title)
+      .setDescription(description)
+      .setAuthor(
+        "DiscordTidalBot",
+        null,
+        "https://github.com/max-scopp/discord-tidal-bot"
+      )
+      .setURL(track.url)
+      .setThumbnail(albumCover)
+      .addFields(
+        ...fields
+      )
+      .setTimestamp()
+      .setFooter("Song provided by TIDAL");
+    
+    if(messagePreflight){
+      sender.reply(messagePreflight);
+    }
+
+    sender.channel.send(embed);
+  }
+
+  async showLyrics(track: Track, sender: Message) {
+    const query = `${track.artists.filter(artist => artist.type === "MAIN").map(artist => artist.name)} ${track.title}`
+      .replace(/(version|originally|performed|instrumental|\)|\(|various\sartists?)/gi, '')
+      .replace(/\s+/gi, ' ')
+    console.log('query', query)
+    const lyrics = await searchLyrics(query);
+
+    if (lyrics) {
+      sender.react('🎙');
+
+      let totalThrottled = 0;
+      const throttle = 800;
+      let didCancel: false | number = false;
+
+      lyrics.lyrics.forEach(message => {
+        if (totalThrottled < (1e3 * 10)) {
+          setTimeout(() => {
+            const [firstLine, ...lines] = message.split('\n');
+            const richVerse = new MessageEmbed()
+
+            // if the first line is like:
+            // [Intro...something]
+            // INTRO...something
+            // "(" and ")" are not matches because they may signify actual lyrical content.
+            if (firstLine.match(/(^[\[]|^[A-Z]{2,})/)) {
+              richVerse.setTitle(firstLine.replace(/(^[\[]|[\]]$)/g, ''))
+              richVerse.setDescription(lines.join('\n'))
+            } else {
+              richVerse.setDescription(message);
+            }
+
+            richVerse.setFooter("GENIUS", geniusIcon);
+
+            sender.channel.send(richVerse)
+          }, totalThrottled)
+        } else if (!didCancel) {
+          didCancel = totalThrottled;
+        }
+
+        totalThrottled += throttle;
+      });
+
+      const richLyrics = new MessageEmbed()
+        .setColor('#ff0080')
+        .setTitle('[LYRICS] ' + lyrics.header)
+        .setURL(lyrics.url)
+        .addField("Dev Detail", `To avoid queue-congestion, each verse is throttled by ${throttle}ms, this time totalling a delay of ${totalThrottled / 1e3}s.`)
+        .setThumbnail(geniusIcon)
+        .setFooter("Lyrics by GENIUS", geniusIcon)
+
+      if (didCancel) {
+        richLyrics.addField('**!IMPORTANT!**', `The lyrics are NOT complete. The server would be overloaded. Hard stop was after ${didCancel / 1e3}s, therefor creating ${didCancel / throttle} messages.`)
+      }
+
+      if (lyrics.delay) {
+        richLyrics.addField("API Notice", `The document for the lyrics was malformed. An delay of ${lyrics.delay / 1e3}s was created.`);
+      }
+
+      sender.channel.send(richLyrics);
+    } else {
+      sender.react('🔇');
+      sender.reply(`There are no lyrics!`);
+    }
+  }
+
   validateState() {
-    if (this.state !== TidalState.Valid) {
+    if (this.state !== BotState.Valid) {
       throw new Error('Not logged in');
     }
   }
@@ -214,8 +430,17 @@ export default class TidalBot {
    * @param creds 
    */
   setCredentials(creds: Credentials) {
-    this.persistCredentials(creds);
+    this._config = {
+      ...this.config,
+      ...creds
+    }
+    this.persistConfig();
     this.initApi();
+  }
+
+  setConfig(key: string, value: string) {
+    this.config[key] = value;
+    this.persistConfig();
   }
 
   /**
@@ -223,28 +448,53 @@ export default class TidalBot {
    * we start the application.
    * @param creds 
    */
-  persistCredentials(creds: Credentials) {
-    const credsString = JSON.stringify(creds);
+  persistConfig() {
+    const credsString = JSON.stringify(this._config);
 
-    fs.writeFile(this.credentialsPath, credsString, Utils.noop);
+    fs.writeFile(this.configPath, credsString, Utils.noop);
   }
+
+  loadConfig() {
+    if (!fs.existsSync(this.configPath)) {
+      throw new Error('Configuration does not exist.');
+    } else {
+      this._config = JSON.parse(fs.readFileSync(this.configPath).toString());
+    }
+  }
+
+  private _config: Configuration;
+
+  get config() {
+    if (!this._config) {
+      this.loadConfig();
+    }
+
+    return this._config;
+  }
+
+
 
   /**
    * Returns the stored credentials. Otherwise, null.
    */
   getCredentials(): Credentials {
-    if (!fs.existsSync(this.credentialsPath)) {
-      throw new Error('Credentials do not exist');
-    } else {
-      return JSON.parse(fs.readFileSync(this.credentialsPath).toString());
+    const { username, password } = this.config;
+
+    if (!username || !password) {
+      throw new Error('Credentials do not exist.');
     }
+
+    return {
+      username,
+      password
+    };
   }
 
   /**
    * Returns the path where to write the credentials to.
    */
-  get credentialsPath() {
-    return path.resolve(homedir(), './.tidal-bot-creds');
+  get configPath() {
+    return path.resolve(homedir(), './.tidal-bot');
   }
 
   /**
@@ -264,46 +514,9 @@ export default class TidalBot {
       quality: 'HIGH' // TODO: Make configuratable
     });
 
-    this.state = TidalState.Valid;
+    console.log('TidalManager init')
+    console.log(this.manager);
+
+    this.state = BotState.Valid;
   }
 }
-
-// api.search({ type: 'artists', query: 'Dream Theater', limit: 1 }, function (err, data, headers) {
-//   console.log(data.artists);
-// })
-
-// api.search({ type: 'albums', query: 'Dream Theater', limit: 1 }, function (err, data, headers) {
-//   console.log(data.albums);
-// })
-
-// api.search({ type: 'tracks', query: 'Dream Theater', limit: 1 }, function (err, data, headers) {
-//   console.log(data.tracks);
-// })
-
-// api.search({ type: 'tracks,albums,artists', query: 'Dream Theater', limit: 1 }, function (err, data, headers) {
-//   console.log(data.tracks);
-//   console.log(data.albums);
-//   console.log(data.artists);
-// // })
-
-// api.getTrackInfo({ id: 22560696 }, function (err, data, headers) {
-//   console.log(data)
-// })
-
-// api.getStreamURL({ id: 22560696 }, function (err, data, headers) {
-//   console.log(data)
-// })
-
-// api.getVideoStreamURL({ id: 25470315 }, function (err, data, headers) {
-//   console.log(data)
-// })
-
-// console.log(api.getArtURL('24f52ab0-e7d6-414d-a650-20a4c686aa57', 1280)) //coverid
-
-// api.getArtistVideos({ id: 14670, limit: 2 }, function (err, data, headers) {
-//   console.log(data)
-// })
-
-// api.genMetaflacTags({ id: 22560696, coverPath: './albumart.jpg', songPath: './song.flac' }, function (err, data, headers) {
-//   console.log(data)
-// });

@@ -1,49 +1,55 @@
-import { Component, h, State } from '@stencil/core';
+import { Component, h, State, Host } from '@stencil/core';
 import { BackendSection, evalBackend } from '../../util';
 import { UI } from '../../../../tidal-bot-electron/types/tidal-bot-backend/types';
 
 @Component({
-  tag: 'app-home',
-  styleUrl: 'app-home.css',
-  shadow: true
+    tag: 'app-home',
+    styleUrl: 'app-home.scss',
 })
 export class AppHome {
 
-  @State()
-  query: string;
+    @State()
+    query: string;
 
-  @State()
-  voiceChannels: UI.Channel[] = []
+    @State()
+    voiceChannels: UI.Channel[] = []
 
-  streamFirstQueryMatch = () => {
-    ipcRenderer.send('tb-play', {
-      type: 'search',
-      query: this.query
-    })
-  }
+    streamFirstQueryMatch = () => {
+        ipcRenderer.send('tb-play', {
+            type: 'search',
+            query: this.query
+        })
+    }
 
-  async componentDidLoad() {
-    this.voiceChannels = await evalBackend(BackendSection.Discord, 'getVoiceChannels');
-  }
+    @State()
+    activePlaylistId: string;
 
-  joinChannel = async (channel: UI.Channel) => {
-    evalBackend(BackendSection.Discord, 'joinVoiceChannel', channel.id)
-  }
+    setActivePlaylist = (event: CustomEvent) => {
+        const { detail: playlistId } = event;
+        this.activePlaylistId = playlistId;
+    }
 
-  render() {
-    return (
-      <div class='app-home'>
-        <input onChange={(ev: any) => {
-          this.query = ev.target.value;
-        }} />
-        <msc-button onClick={this.streamFirstQueryMatch}>Pick first result and play</msc-button>
-        <msc-title>Channels</msc-title>
-        <msc-list>
-          {this.voiceChannels.map(vChannel => (
-            <msc-item interactive={true} onClick={() => this.joinChannel(vChannel)}>{vChannel.name}</msc-item>
-          ))}
-        </msc-list>
-      </div>
-    );
-  }
+    async componentDidLoad() {
+        this.voiceChannels = await evalBackend(BackendSection.Discord, 'getVoiceChannels');
+    }
+
+    joinChannel = async (channel: UI.Channel) => {
+        evalBackend(BackendSection.Discord, 'joinVoiceChannel', channel.id)
+    }
+
+    render() {
+        return (
+            <Host>
+                <app-now-playing ></app-now-playing>
+{/* 
+                <input onChange={(ev: any) => {
+                    this.query = ev.target.value;
+                }} />
+                <msc-button onClick={this.streamFirstQueryMatch}>Pick first result and play</msc-button> */}
+                <tidal-track-list playlistId={this.activePlaylistId} />
+                <sidebar-discord-channels />
+                <sidebar-tidal-playlists onPlaylistClick={this.setActivePlaylist} />
+            </Host>
+        );
+    }
 }

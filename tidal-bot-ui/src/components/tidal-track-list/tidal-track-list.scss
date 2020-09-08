@@ -1,0 +1,14 @@
+tidal-track-list {
+    display: flex;
+    flex-direction: column;
+
+    flex: 1;
+    
+    .title {
+        flex: 1;
+    }
+
+    ion-item {
+        cursor: pointer;
+    }
+}

@@ -1,7 +1,31 @@
 import DiscordStreamable from "./discord";
-import { Message } from "discord.js";
+import { Message, MessageEmbed, TextChannel } from "discord.js";
+import { QueueOverview } from "./queue";
+import { Track } from "./tidal/types";
+import { SizeOptions, getAlbumArt } from "./tidal/utils";
 
 export default class DiscordResopnse {
+  nowPlaying(track: Track, channel: TextChannel) {
+
+    const [_endDate, endTime] = (new Date(
+      Date.now() + track.duration * 1e3
+    ))
+      .toLocaleString()
+      .split(',')
+
+    const richNowPlaying = new MessageEmbed()
+      .setTitle("Now Playing")
+      .setDescription(`**${track.title}** by ${track.artists.map(artist => artist.name).join(', ')}`)
+      .setColor("#00eeff")
+      .setURL(track.url)
+      .setFooter(`The track will end at ${endTime}`)
+      .setThumbnail(
+        getAlbumArt(track.album.cover, SizeOptions.Thumbnail)
+      )
+
+    channel.send(richNowPlaying);
+  }
+
   noSongFound(message: Message) {
     message.react('😔');
     message.reply(`Nothing found. Sorry.`);
@@ -9,6 +33,60 @@ export default class DiscordResopnse {
 
   constructor(private readonly parent: DiscordStreamable) {
 
+  }
+
+  async queueOverview(overview: QueueOverview, message: Message) {
+    const completelyEmpty = !overview.master.length && !overview.external.length;
+
+    const queueEntry = (track: Track, position: number | string) => {
+      return `**${position}:** ${track.title} - ${track.artists.map(artist => artist.name).join(', ')}`
+    }
+
+    const nothing = "_Nothing queued._";
+
+    const description = [
+      overview.nowPlaying ? queueEntry(overview.nowPlaying, 'NOW') : '_There is nothing playing right now_',
+      "\u00A0"
+    ];
+
+    if (completelyEmpty) {
+      description.push("_There is nothing queued_");
+    } else {
+      description.push(
+        "Here is a list of the next songs that will be played.",
+        "There may be new songs added by the master-dj at a later point in time."
+      );
+    }
+
+    const richOverview = new MessageEmbed()
+      .setColor('#ff9900')
+      .setTitle("UpNext™")
+      .setTimestamp()
+      .setDescription(description);
+
+    if (!completelyEmpty) {
+      richOverview.addFields([
+        {
+          name: 'Prioritized',
+          value: overview.master.length ? overview.master.map((queued, index) => {
+            return queueEntry(queued.track, index + 1)
+          }) : nothing
+        },
+        {
+          name: 'Your Queue',
+          value: overview.external.length ? overview.external.map((queued, index) => {
+            return queueEntry(queued.track, index + 1)
+          }) : nothing
+        },
+      ]);
+    }
+
+    message.reply(richOverview);
+  }
+
+  async notImplemented(message: Message) {
+    message.react('❌');
+    message.reply(`This feature is not implemented yet. Sorry.`);
   }
 
   async pong(message: Message) {
@@ -71,7 +149,6 @@ export default class DiscordResopnse {
   }
 
   async joinSendersVoiceChannel(message: Message) {
-
     // Join the same voice channel of the author of the message
     if (message.member.voice.channel) {
       try {
